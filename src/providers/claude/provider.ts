@@ -20,8 +20,8 @@ import {ProviderRuntimeError} from '../../runtime/errors.js';
 import type {Translator} from '../../shared/i18n/index.js';
 import type {HttpProviderDependencies} from '../http-dependencies.js';
 import {
-  compactWindowLabel,
   parseClaudeUsageResponse,
+  selectWindow,
   type ClaudeData,
   type ClaudeLimitWindow,
 } from './parser.js';
@@ -77,17 +77,16 @@ export class ClaudeProvider implements UsageProvider<ClaudeData> {
 
   getPanelItems(state: ProviderState<ClaudeData>): PanelItem[] {
     const data = effectiveData(state);
-    if (!data) {
-      return [{
-        text: '--',
-        priority: 25,
-      }];
-    }
-
-    return data.limits.map((window, index) => ({
-      text: `${compactWindowLabel(window)} ${window.remainingPercent}%`,
-      priority: 25 + index,
-    }));
+    // One number only, like Codex: the weekly window is the one worth
+    // planning around, the session window is short lived. Both stay visible
+    // in the popup menu.
+    const window = data
+      ? selectWindow(data, 'weekly') ?? data.limits[0] ?? null
+      : null;
+    return [{
+      text: window ? `${Math.round(window.remainingPercent)}%` : '--',
+      priority: 25,
+    }];
   }
 
   getPopupViewModel(state: ProviderState<ClaudeData>): ProviderViewModel {

@@ -14,7 +14,7 @@
     "host:install": "npm run package && node scripts/install-local.mjs",
     "host:clean": "node scripts/uninstall-local.mjs",
     "install:local": "npm run host:install",
-    "test": "npm run build && node --test tests/*.test.mjs && gjs -m tests/http-runtime-smoke.js",
+    "test": "npm run build && node --test tests/*.test.mjs && gjs -m tests/http-runtime-smoke.js && gjs -m tests/refresh-retry-smoke.js",
     "test:providers:live": "npm run build && gjs -m tests/live-http-providers.js",
     "test:providers:cli:live": "npm run build && gjs -m tests/live-cli-providers.js",
     "test:gnome": "npm run package && node scripts/test-gnome.mjs",
