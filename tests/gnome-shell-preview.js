@@ -6,7 +6,7 @@ import {
     syncPreviewActivationEnvironment,
 } from './gnome-shell-preview-environment.js';
 
-const UUID = 'quota-glance@geequlim';
+const UUID = 'quota-glance-clicgger@clicgger.github.io';
 
 export const METRICS = {};
 

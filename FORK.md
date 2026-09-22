@@ -1,11 +1,16 @@
-# Quota Glance(claude fork)
+# Quota Glance Clicgger(个人 fork)
 
-上游:`https://github.com/Geequlim/quota-glance`(本仓库的 `origin`)
-本 fork 只做一件事:**给 Quota Glance 加一个 Claude 渠道**,其余代码与上游保持一致,方便日后 `git rebase` 跟进。
+- 上游:`https://github.com/Geequlim/quota-glance`(remote 名 `upstream`)
+- 本仓库:`https://github.com/CLICGGER-TYPES/quota-glance-clicgger`(remote 名 `origin`)
+- 本 fork 在上游基础上加了 **Claude 渠道**、**代理设置**、**顶栏位置**、**网络失败短延时重试**,其余代码与上游保持一致,方便 `git rebase` 跟进
+- 身份:
+  - 显示名 `Quota Glance Clicgger`
+  - UUID `quota-glance-clicgger@clicgger.github.io`
+  - schema `org.gnome.shell.extensions.quota-glance-clicgger`,dconf 路径 `/org/gnome/shell/extensions/quota-glance-clicgger/`
 
-- 版本号:`1.0.2+claude.1`(package.json / package-lock.json / metadata.json 三处一致)
-- UUID 仍是 `quota-glance@geequlim`:GNOME Shell 扫描扩展时**用户目录优先**(`fileUtils.js` 里 `dataDirs.unshift(get_user_data_dir())`,重名时后者跳过),所以装到
-  `~/.local/share/gnome-shell/extensions/quota-glance@geequlim/` 的这份会**盖住**系统包(`/usr/share/...`)那份,不需要先卸 AUR 包。
+> 从上游 UUID(`quota-glance@geequlim`)改名过一次。改名后**不再盖住** AUR / 发行版装的那份:
+> 两份是不同 UUID 的独立扩展,旧那份必须卸掉或禁用,否则面板上会出现两个图标。
+> 旧 dconf 设置已用 `dconf dump | dconf load` 搬过来(见下面「改名迁移」)。
 
 ## 新增/改动的文件
 
@@ -60,9 +65,9 @@ cd upstream
 npm ci --registry=https://registry.npmmirror.com   # 本机 npm 12:registry 必须与 lockfile 里的 mirror 一致,否则 EALLOWREMOTE
 npm run typecheck && npm run lint && npm test
 npm run package                                    # 产出 artifacts/*.zip
-gnome-extensions install --force artifacts/quota-glance@geequlim.shell-extension.zip
+gnome-extensions install --force artifacts/quota-glance-clicgger@clicgger.github.io.shell-extension.zip
 # 首次装到用户目录,GNOME Shell 不热加载:注销重登一次
-gnome-extensions info quota-glance@geequlim        # 确认 Path 指向 ~/.local/share/...
+gnome-extensions info quota-glance-clicgger@clicgger.github.io        # 确认 Path 指向 ~/.local/share/...
 ```
 
 重登后别忘了在扩展设置里勾上 **Claude**(`enabled-providers` 是独立设置项,不会自动加)。
@@ -143,6 +148,20 @@ import specifier 不带版本参数 → 模块缓存命中,`disable` + `enable` 
 图标另有 St 纹理缓存(路径 + 前景色 + 尺寸为 key)。
 **所以改完 JS / 图标后必须注销重登**;判断文件是否已更新要看 `md5sum`,不能看面板表现。
 唯一不需要重登的是**设置项** —— 设置是运行时读的,`changed::<key>` 直接触发重新挂载或重新取数。
+
+## 改名迁移(一次性)
+
+```bash
+# 1) 备份旧设置并搬到新路径
+dconf dump /org/gnome/shell/extensions/quota-glance/ > old.dump
+dconf load /org/gnome/shell/extensions/quota-glance-clicgger/ < old.dump
+
+# 2) 换 enabled-extensions:去掉旧 UUID、加上新 UUID
+# 3) 卸掉旧的用户目录副本(如果装过)
+gnome-extensions uninstall quota-glance@geequlim
+# 4) 发行版/AUR 装的那份建议直接卸掉:sudo pacman -R gnome-shell-extension-quota-glance
+# 5) 装新 UUID 后注销重登(新 UUID 必须让 Shell 重新扫描)
+```
 
 ## 已知限制
 

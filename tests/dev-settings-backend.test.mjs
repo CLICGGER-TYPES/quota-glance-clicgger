@@ -5,7 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
 
-const SCHEMA = 'org.gnome.shell.extensions.quota-glance';
+const SCHEMA = 'org.gnome.shell.extensions.quota-glance-clicgger';
 
 test('development keyfile settings propagate across processes', async () => {
   const configDirectory = await mkdtemp(
@@ -17,7 +17,7 @@ test('development keyfile settings propagate across processes', async () => {
     GSETTINGS_SCHEMA_DIR: path.join(
       process.cwd(),
       'build',
-      'quota-glance@geequlim',
+      'quota-glance-clicgger@clicgger.github.io',
       'schemas',
     ),
     XDG_CONFIG_HOME: configDirectory,

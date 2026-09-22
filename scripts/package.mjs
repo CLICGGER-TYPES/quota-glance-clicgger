@@ -4,7 +4,7 @@ import path from 'node:path';
 import process from 'node:process';
 
 const projectRoot = process.cwd();
-const sourceRoot = path.join(projectRoot, 'build', 'quota-glance@geequlim');
+const sourceRoot = path.join(projectRoot, 'build', 'quota-glance-clicgger@clicgger.github.io');
 const artifactsRoot = path.join(projectRoot, 'artifacts');
 const moduleDirectories = [
   'core',

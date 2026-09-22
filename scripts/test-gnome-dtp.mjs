@@ -19,7 +19,7 @@ try {
       '--extension',
       fixture.zipPath,
       '--extension',
-      'artifacts/quota-glance@geequlim.shell-extension.zip',
+      'artifacts/quota-glance-clicgger@clicgger.github.io.shell-extension.zip',
       'tests/gnome-shell-dtp-smoke.js',
     ],
     {

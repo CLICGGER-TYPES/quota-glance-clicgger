@@ -5,7 +5,7 @@ import St from 'gi://St';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 
 const DASH_TO_PANEL_UUID = 'dash-to-panel@jderose9.github.com';
-const QUOTA_GLANCE_UUID = 'quota-glance@geequlim';
+const QUOTA_GLANCE_UUID = 'quota-glance-clicgger@clicgger.github.io';
 
 export const METRICS = {
     dashToPanelMounts: {

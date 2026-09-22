@@ -3,7 +3,7 @@ import GLib from 'gi://GLib';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
 
-const UUID = 'quota-glance@geequlim';
+const UUID = 'quota-glance-clicgger@clicgger.github.io';
 
 export const METRICS = {
     lifecycleCycles: {

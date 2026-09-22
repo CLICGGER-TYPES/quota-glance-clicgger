@@ -1,6 +1,21 @@
-# Quota Glance
+# Quota Glance Clicgger
 
 [English](README.md) | [简体中文](README.zh-CN.md)
+
+> **This is a personal fork, modified with AI.** The upstream project is
+> [Geequlim/quota-glance](https://github.com/Geequlim/quota-glance); this fork lives at
+> [CLICGGER-TYPES/quota-glance-clicgger](https://github.com/CLICGGER-TYPES/quota-glance-clicgger).
+> On top of upstream it adds:
+>
+> - a **Claude** provider (Claude Code plan usage, read from `~/.claude/.credentials.json`)
+> - **proxy settings** in the preferences (they used to require an environment file)
+> - a **top bar position** setting (left / center / right, default left)
+> - **short-delay retries** for network failures, so a session proxy that starts a
+>   few seconds after login no longer leaves an error in the panel
+>
+> All of it was written with AI assistance and reviewed by hand; see [FORK.md](FORK.md)
+> for the details, the limitations and how to sync with upstream. Upstream's own
+> documentation follows unchanged below.
 
 Quota Glance is a GNOME Shell extension that shows service quotas and balances
 in a GNOME panel.
@@ -47,7 +62,7 @@ settings window. Open it from the popup's **Settings** item, from the Extensions
 app, or with:
 
 ```sh
-gnome-extensions prefs quota-glance@geequlim
+gnome-extensions prefs quota-glance-clicgger@clicgger.github.io
 ```
 
 Quota Glance uses GNOME's top panel by default. When a bottom Dash to Panel
@@ -58,8 +73,8 @@ indicator safely falls back to the GNOME panel. The same setting can be changed
 from the command line:
 
 ```sh
-gsettings set org.gnome.shell.extensions.quota-glance panel-target main
-gsettings set org.gnome.shell.extensions.quota-glance panel-target dash-to-panel
+gsettings set org.gnome.shell.extensions.quota-glance-clicgger panel-target main
+gsettings set org.gnome.shell.extensions.quota-glance-clicgger panel-target dash-to-panel
 ```
 
 ## Development
@@ -105,7 +120,7 @@ npm run host:clean
 
 `host:install` builds, packages, replaces any existing local copy, and enables
 the extension. `host:clean` disables and removes only the current user's
-`quota-glance@geequlim` installation. It preserves extension settings and
+`quota-glance-clicgger@clicgger.github.io` installation. It preserves extension settings and
 provider credentials. The older `npm run install:local` name remains as an
 alias for `host:install`. On the first host installation, GNOME Shell's Wayland
 session may not discover the new local UUID until the next login. In that case

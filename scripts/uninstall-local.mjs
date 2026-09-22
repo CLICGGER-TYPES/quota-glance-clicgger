@@ -3,7 +3,7 @@ import {spawnSync} from 'node:child_process';
 import os from 'node:os';
 import path from 'node:path';
 
-const extensionUuid = 'quota-glance@geequlim';
+const extensionUuid = 'quota-glance-clicgger@clicgger.github.io';
 const localExtensionRoot = path.join(
   os.homedir(),
   '.local',

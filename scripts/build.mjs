@@ -4,13 +4,13 @@ import path from 'node:path';
 import process from 'node:process';
 
 const projectRoot = process.cwd();
-const uuid = 'quota-glance@geequlim';
+const uuid = 'quota-glance-clicgger@clicgger.github.io';
 const compiledRoot = path.join(projectRoot, '.build-js');
 const outputRoot = path.join(projectRoot, 'build', uuid);
 const schemaSource = path.join(
   projectRoot,
   'schemas',
-  'org.gnome.shell.extensions.quota-glance.gschema.xml',
+  'org.gnome.shell.extensions.quota-glance-clicgger.gschema.xml',
 );
 
 await rm(outputRoot, {recursive: true, force: true});

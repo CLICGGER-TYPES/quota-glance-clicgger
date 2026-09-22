@@ -1,10 +1,10 @@
 {
-  "name": "Quota Glance",
-  "description": "View service quotas and balances from a GNOME panel.",
-  "uuid": "quota-glance@geequlim",
-  "url": "https://github.com/geequlim/quota-glance",
-  "settings-schema": "org.gnome.shell.extensions.quota-glance",
-  "version-name": "1.0.2+claude.3",
+  "name": "Quota Glance Clicgger",
+  "description": "Claude, Codex and DeepSeek quotas in the GNOME panel. AI-modified fork of Quota Glance with Claude support, proxy settings and top bar placement.",
+  "uuid": "quota-glance-clicgger@clicgger.github.io",
+  "url": "https://github.com/CLICGGER-TYPES/quota-glance-clicgger",
+  "settings-schema": "org.gnome.shell.extensions.quota-glance-clicgger",
+  "version-name": "1.0.2+clicgger.1",
   "shell-version": [
     "50"
   ]

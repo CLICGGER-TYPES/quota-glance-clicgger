@@ -15,7 +15,7 @@ import process from 'node:process';
 const projectRoot = process.cwd();
 const repository = 'Geequlim/quota-glance';
 const packageName = 'gnome-shell-extension-quota-glance';
-const extensionUuid = 'quota-glance@geequlim';
+const extensionUuid = 'quota-glance-clicgger@clicgger.github.io';
 const assetName = `${extensionUuid}.shell-extension.zip`;
 const packageJson = JSON.parse(
   await readFile(path.join(projectRoot, 'package.json'), 'utf8'),

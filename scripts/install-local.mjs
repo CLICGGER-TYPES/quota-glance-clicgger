@@ -3,7 +3,7 @@ import {spawnSync} from 'node:child_process';
 import path from 'node:path';
 import process from 'node:process';
 
-const extensionUuid = 'quota-glance@geequlim';
+const extensionUuid = 'quota-glance-clicgger@clicgger.github.io';
 const projectRoot = process.cwd();
 const artifactsRoot = path.join(projectRoot, 'artifacts');
 const zipFiles = (await readdir(artifactsRoot)).filter(name => name.endsWith('.zip'));

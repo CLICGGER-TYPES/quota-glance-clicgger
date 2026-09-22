@@ -7,7 +7,7 @@ import process from 'node:process';
 const extensionRoot = path.join(
   process.cwd(),
   'build',
-  'quota-glance@geequlim',
+  'quota-glance-clicgger@clicgger.github.io',
 );
 
 test('build contains a loadable extension layout', async () => {
@@ -45,12 +45,12 @@ test('build contains a loadable extension layout', async () => {
   const packageJson = JSON.parse(
     await readFile(path.join(process.cwd(), 'package.json'), 'utf8'),
   );
-  assert.equal(metadata.uuid, 'quota-glance@geequlim');
+  assert.equal(metadata.uuid, 'quota-glance-clicgger@clicgger.github.io');
   assert.deepEqual(metadata['shell-version'], ['50']);
   assert.equal(metadata['version-name'], packageJson.version);
   assert.equal(metadata['session-modes'], undefined);
   assert.equal(
     metadata['settings-schema'],
-    'org.gnome.shell.extensions.quota-glance',
+    'org.gnome.shell.extensions.quota-glance-clicgger',
   );
 });

@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <schemalist>
   <schema
-    id="org.gnome.shell.extensions.quota-glance"
-    path="/org/gnome/shell/extensions/quota-glance/">
+    id="org.gnome.shell.extensions.quota-glance-clicgger"
+    path="/org/gnome/shell/extensions/quota-glance-clicgger/">
     <key name="refresh-interval-minutes" type="i">
       <default>5</default>
       <range min="1" max="240"/>

@@ -1,6 +1,6 @@
 {
-  "name": "quota-glance",
-  "version": "1.0.2+claude.3",
+  "name": "quota-glance-clicgger",
+  "version": "1.0.2+clicgger.1",
   "description": "A GNOME Shell extension for viewing service quotas at a glance.",
   "type": "module",
   "private": true,

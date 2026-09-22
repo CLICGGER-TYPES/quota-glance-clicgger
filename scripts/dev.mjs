@@ -37,7 +37,7 @@ try {
       '--disable-animations',
       ...extensionArguments,
       '--extension',
-      'artifacts/quota-glance@geequlim.shell-extension.zip',
+      'artifacts/quota-glance-clicgger@clicgger.github.io.shell-extension.zip',
       dashToPanelFixture
         ? 'tests/gnome-shell-dtp-preview.js'
         : 'tests/gnome-shell-preview.js',

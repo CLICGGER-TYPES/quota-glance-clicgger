@@ -8,7 +8,7 @@ import {
 } from './gnome-shell-preview-environment.js';
 
 const DASH_TO_PANEL_UUID = 'dash-to-panel@jderose9.github.com';
-const QUOTA_GLANCE_UUID = 'quota-glance@geequlim';
+const QUOTA_GLANCE_UUID = 'quota-glance-clicgger@clicgger.github.io';
 
 export const METRICS = {};
 

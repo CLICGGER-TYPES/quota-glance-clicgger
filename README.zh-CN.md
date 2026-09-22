@@ -1,6 +1,19 @@
-# Quota Glance
+# Quota Glance Clicgger
 
 [English](README.md) | [简体中文](README.zh-CN.md)
+
+> **这是我用 AI 改的个人分支（fork）。** 上游项目是
+> [Geequlim/quota-glance](https://github.com/Geequlim/quota-glance)，本分支在
+> [CLICGGER-TYPES/quota-glance-clicgger](https://github.com/CLICGGER-TYPES/quota-glance-clicgger)。
+> 在上游基础上加了：
+>
+> - **Claude 渠道**（Claude Code 套餐用量，从 `~/.claude/.credentials.json` 读取）
+> - 首选项里的**代理设置**（以前只能改环境变量文件）
+> - **顶栏位置**设置（左 / 中 / 右，默认左侧）
+> - 网络失败的**短延时重试**，登录时比系统代理晚几秒启动也不会在面板上留一条报错
+>
+> 这些改动都是 AI 写的、我人工过了一遍；细节、已知限制和跟上游同步的方法见
+> [FORK.md](FORK.md)。下面是上游原本的说明，未做改动。
 
 Quota Glance 是一个 GNOME Shell 扩展，用于在 GNOME 面板中快速查看各项服务的额度和余额。
 
@@ -44,7 +57,7 @@ Provider 开关和自动刷新间隔位于扩展设置窗口中。可以通过�
 **设置**、GNOME 扩展应用或以下命令打开：
 
 ```sh
-gnome-extensions prefs quota-glance@geequlim
+gnome-extensions prefs quota-glance-clicgger@clicgger.github.io
 ```
 
 Quota Glance 默认显示在 GNOME 顶部面板。当系统中确实存在 Dash to Panel
@@ -53,8 +66,8 @@ Panel 底部面板之间切换。没有可用的底部面板时，该选项会�
 GNOME 顶部面板。还可以通过命令行修改相同的设置：
 
 ```sh
-gsettings set org.gnome.shell.extensions.quota-glance panel-target main
-gsettings set org.gnome.shell.extensions.quota-glance panel-target dash-to-panel
+gsettings set org.gnome.shell.extensions.quota-glance-clicgger panel-target main
+gsettings set org.gnome.shell.extensions.quota-glance-clicgger panel-target dash-to-panel
 ```
 
 ## 开发
@@ -97,7 +110,7 @@ npm run host:clean
 ```
 
 `host:install` 会构建、打包、替换已有的本地安装并启用扩展。`host:clean`
-只会禁用并删除当前用户安装的 `quota-glance@geequlim`，不会清除扩展设置和
+只会禁用并删除当前用户安装的 `quota-glance-clicgger@clicgger.github.io`，不会清除扩展设置和
 Provider 凭据。旧的 `npm run install:local` 仍作为 `host:install` 的别名保留。
 
 第一次安装时，当前运行的 GNOME Shell Wayland 会话可能还无法发现新 UUID。此时命令
