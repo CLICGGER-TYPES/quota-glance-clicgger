@@ -13,6 +13,7 @@
 |---|---|
 | `src/providers/claude/provider.ts` | 渠道实现:读凭证 → 打用量接口 → 401/403 时让 CLI 续期一次 → 重试;面板只显示本周剩余一个数 |
 | `src/core/controller.ts` | 网络类失败(`http` / `timeout`)的短延时重试阶梯 10s → 30s → 90s |
+| `src/host/panel-target.ts`、`src/extension.ts`、`src/prefs.ts`、`schemas/*.gschema.xml` | 新增 `panel-position` 设置(左/中/右),默认**左侧** |
 | `src/providers/claude/parser.ts` | 用量报文归一化(`limits[]` 与旧版顶层窗口两种形态) |
 | `src/runtime/claude-credentials.ts` | 只读 `~/.claude/.credentials.json`(每次 collect 重新读,CLI 轮换的 token 自动生效) |
 | `src/runtime/claude-auth.ts` | 续期:spawn `claude auth login --claudeai`,refresh token 走环境变量,45s 超时 |
@@ -82,6 +83,21 @@ gjs -m ../scratch/verify-claude-provider.mjs
 # 弹出菜单里两条进度条都在
 ```
 
+## 面板位置
+
+默认放在 **GNOME 顶栏左侧**。索引算法照搬官方 `gnome-shell-extensions` 里 places-menu 的写法:
+
+```ts
+pos = Main.sessionMode.panel.left.length        // 默认模式是 ['activities'] → 1
+    + ('apps-menu' in Main.panel.statusArea ? 1 : 0);
+Main.panel.addToStatusArea(uuid, indicator, pos, 'left');
+```
+
+所以它排在「活动」按钮**右侧**、其他左侧项目之后,不会跑到状态区(右侧那堆)里去。
+
+设置里多了一个「顶栏位置:左侧 / 中间 / 右侧」(schema 键 `panel-position`),**改完立即生效,不用重登** ——
+`changed::panel-position` 会重新挂载指示器。Dash to Panel 那边固定进中间任务栏区,不受这个设置影响。
+
 ## 依赖的环境变量
 
 扩展只认 `~/.config/quota-glance/env`(优先级最高)与 `/etc/environment`、`~/.config/environment.d/*.conf`、会话环境:
@@ -104,9 +120,18 @@ git rebase origin/main                # 冲突一般只落在 index.ts / provide
 npm ci --registry=https://registry.npmmirror.com && npm test
 ```
 
+## 改代码的代价
+
+GNOME Shell **不能热重载扩展代码**:`extensionSystem.js:501` 是 `await import(extensionJs.get_uri())`,
+import specifier 不带版本参数 → 模块缓存命中,`disable` + `enable` 只是重跑旧对象的 `enable()`。
+图标另有 St 纹理缓存(路径 + 前景色 + 尺寸为 key)。
+**所以改完 JS / 图标后必须注销重登**;判断文件是否已更新要看 `md5sum`,不能看面板表现。
+唯一不需要重登的是**设置项** —— 设置是运行时读的,`changed::<key>` 直接触发重新挂载或重新取数。
+
 ## 已知限制
 
 - 面板只显示本周剩余(与 Codex 一致),5 小时窗口只在点开菜单里看;想换成会话窗口改 `provider.ts` 的 `getPanelItems` 一行即可。
+- 左侧位置的三档设置生效不需要重登,但**改动代码后必须注销重登**(见下面「改代码的代价」)。
 - 只处理「会话 + 每周 + 模型级」三类窗口;`seven_day_breakdown`(Claude Code / Chats / Cowork 用量占比)与 `spend`(额外额度)暂未展示。
 - 模型级窗口若只出现在顶层键而没有 `limits[]` 条目,名称由键名推导(`seven_day_sonnet` → `Sonnet`),不是 Anthropic 的 display_name。
 - 续期依赖本机 `claude` CLI;没有它只能等 Claude Code 自己刷新 token。

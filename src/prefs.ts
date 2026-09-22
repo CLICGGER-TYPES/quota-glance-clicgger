@@ -15,6 +15,7 @@ import {
 const SETTINGS_ENABLED_PROVIDERS = 'enabled-providers';
 const SETTINGS_DASH_TO_PANEL_AVAILABLE = 'dash-to-panel-available';
 const SETTINGS_PANEL_TARGET = 'panel-target';
+const SETTINGS_PANEL_POSITION = 'panel-position';
 const SETTINGS_REFRESH_INTERVAL = 'refresh-interval-minutes';
 
 export default class QuotaGlancePreferences extends ExtensionPreferences {
@@ -101,6 +102,55 @@ export default class QuotaGlancePreferences extends ExtensionPreferences {
     translator: Translator,
   ): Adw.PreferencesGroup {
     const group = new Adw.PreferencesGroup();
+
+    group.add(this.#createPanelPositionRow(settings, translator));
+    group.add(this.#createPanelTargetRow(settings, translator));
+    return group;
+  }
+
+  /** Where in the top bar the indicator lives. Always visible, and changing
+   *  it remounts the indicator right away — no sign-out needed. */
+  #createPanelPositionRow(
+    settings: Gio.Settings,
+    translator: Translator,
+  ): Adw.ComboRow {
+    const positions: {label: string; value: string}[] = [
+      {label: translator.t('prefs.panel.side.left'), value: 'left'},
+      {label: translator.t('prefs.panel.side.center'), value: 'center'},
+      {label: translator.t('prefs.panel.side.right'), value: 'right'},
+    ];
+    const choices = new Gtk.StringList();
+    for (const position of positions)
+      choices.append(position.label);
+
+    const row = new Adw.ComboRow({
+      title: translator.t('prefs.panel.side.title'),
+      subtitle: translator.t('prefs.panel.side.subtitle'),
+      model: choices,
+      selected: selectedPositionIndex(positions, settings),
+    });
+    let syncing = false;
+
+    row.connect('notify::selected', () => {
+      if (syncing)
+        return;
+
+      const position = positions[row.selected];
+      if (position)
+        settings.set_string(SETTINGS_PANEL_POSITION, position.value);
+    });
+    settings.connect(`changed::${SETTINGS_PANEL_POSITION}`, () => {
+      syncing = true;
+      row.selected = selectedPositionIndex(positions, settings);
+      syncing = false;
+    });
+    return row;
+  }
+
+  #createPanelTargetRow(
+    settings: Gio.Settings,
+    translator: Translator,
+  ): Adw.ComboRow {
     const choices = new Gtk.StringList();
     choices.append(translator.t('prefs.panel.top'));
     choices.append(translator.t('prefs.panel.bottom'));
@@ -130,12 +180,11 @@ export default class QuotaGlancePreferences extends ExtensionPreferences {
     });
     settings.bind(
       SETTINGS_DASH_TO_PANEL_AVAILABLE,
-      group,
+      row,
       'visible',
       Gio.SettingsBindFlags.GET,
     );
-    group.add(row);
-    return group;
+    return row;
   }
 
   #createRefreshGroup(
@@ -177,4 +226,14 @@ export default class QuotaGlancePreferences extends ExtensionPreferences {
     group.add(row);
     return group;
   }
+}
+
+
+function selectedPositionIndex(
+  positions: readonly {value: string}[],
+  settings: Gio.Settings,
+): number {
+  const current = settings.get_string(SETTINGS_PANEL_POSITION);
+  const index = positions.findIndex(position => position.value === current);
+  return index >= 0 ? index : 0;
 }

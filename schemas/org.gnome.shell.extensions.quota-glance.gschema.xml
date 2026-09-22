@@ -23,6 +23,16 @@
       <summary>Panel that hosts Quota Glance</summary>
       <description>Use the GNOME main panel or an available bottom Dash to Panel panel.</description>
     </key>
+    <key name="panel-position" type="s">
+      <choices>
+        <choice value="left"/>
+        <choice value="center"/>
+        <choice value="right"/>
+      </choices>
+      <default>'left'</default>
+      <summary>Position inside the GNOME main panel</summary>
+      <description>Which box of the main panel hosts Quota Glance. Ignored on Dash to Panel.</description>
+    </key>
     <key name="dash-to-panel-available" type="b">
       <default>false</default>
       <summary>Bottom Dash to Panel availability</summary>

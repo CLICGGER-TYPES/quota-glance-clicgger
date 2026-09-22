@@ -1,7 +1,11 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import {resolvePanel} from '../.build-js/host/panel-target.js';
+import {
+  panelBoxPosition,
+  resolvePanel,
+  resolvePanelBox,
+} from '../.build-js/host/panel-target.js';
 
 test('panel target selects the primary Dash to Panel panel', () => {
   const mainPanel = {name: 'gnome-main'};
@@ -95,4 +99,22 @@ test('main panel target ignores Dash to Panel', () => {
 
   assert.equal(resolved.panel, mainPanel);
   assert.equal(resolved.target, 'main');
+});
+
+test('panel box defaults to the left of the GNOME main panel', () => {
+  assert.equal(resolvePanelBox('main', undefined), 'left');
+  assert.equal(resolvePanelBox('main', 'left'), 'left');
+  assert.equal(resolvePanelBox('main', 'center'), 'center');
+  assert.equal(resolvePanelBox('main', 'right'), 'right');
+  assert.equal(resolvePanelBox('main', 'nonsense'), 'left');
+  // A Dash to Panel bar only has a taskbar area.
+  assert.equal(resolvePanelBox('dash-to-panel', 'left'), 'center');
+});
+
+test('left box position appends after the session mode items', () => {
+  assert.equal(panelBoxPosition('left', 1, false), 1);
+  assert.equal(panelBoxPosition('left', 1, true), 2);
+  assert.equal(panelBoxPosition('left', 0, false), 0);
+  assert.equal(panelBoxPosition('center', 1, true), 0);
+  assert.equal(panelBoxPosition('right', 2, true), 0);
 });

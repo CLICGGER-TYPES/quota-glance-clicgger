@@ -13,8 +13,11 @@ import {
   type PanelIndicatorInstance,
 } from './host/panel-indicator.js';
 import {
+  panelBoxPosition,
   resolvePanel,
+  resolvePanelBox,
   type DashToPanelEntry,
+  type PanelBox,
   type PanelTarget,
 } from './host/panel-target.js';
 import {createProviders} from './providers/index.js';
@@ -29,6 +32,7 @@ const DASH_TO_PANEL_UUID = 'dash-to-panel@jderose9.github.com';
 const SETTINGS_DASH_TO_PANEL_AVAILABLE = 'dash-to-panel-available';
 const SETTINGS_ENABLED_PROVIDERS = 'enabled-providers';
 const SETTINGS_PANEL_TARGET = 'panel-target';
+const SETTINGS_PANEL_POSITION = 'panel-position';
 const SETTINGS_REFRESH_INTERVAL = 'refresh-interval-minutes';
 
 type PanelHost = typeof Main.panel;
@@ -52,6 +56,7 @@ export default class QuotaGlanceExtension extends Extension {
   #http: HttpClient | null = null;
   #indicator: PanelIndicatorInstance | null = null;
   #indicatorHost: PanelHost | null = null;
+  #indicatorBox: PanelBox | null = null;
   #providers: UsageProvider[] = [];
   #scheduler: RefreshScheduler | null = null;
   #settings: Gio.Settings | null = null;
@@ -103,6 +108,10 @@ export default class QuotaGlanceExtension extends Extension {
       ),
       this.#settings.connect(
         `changed::${SETTINGS_PANEL_TARGET}`,
+        () => this.#mountIndicator(),
+      ),
+      this.#settings.connect(
+        `changed::${SETTINGS_PANEL_POSITION}`,
         () => this.#mountIndicator(),
       ),
     );
@@ -166,6 +175,7 @@ export default class QuotaGlanceExtension extends Extension {
     this.#indicator?.destroy();
     this.#indicator = null;
     this.#indicatorHost = null;
+    this.#indicatorBox = null;
     this.#store = null;
     this.#settings = null;
   }
@@ -231,17 +241,28 @@ export default class QuotaGlanceExtension extends Extension {
       this.#getPanelTarget(),
       St.Side.BOTTOM,
     );
-    if (this.#indicator && this.#indicatorHost === resolved.panel)
+    const box = resolvePanelBox(
+      resolved.target,
+      this.#settings.get_string(SETTINGS_PANEL_POSITION),
+    );
+    if (
+      this.#indicator &&
+      this.#indicatorHost === resolved.panel &&
+      this.#indicatorBox === box
+    ) {
       return;
+    }
 
     this.#indicator?.destroy();
     const indicator = new PanelIndicator();
     this.#indicator = indicator;
     this.#indicatorHost = resolved.panel;
+    this.#indicatorBox = box;
     indicator.connect('destroy', () => {
       if (this.#indicator === indicator) {
         this.#indicator = null;
         this.#indicatorHost = null;
+        this.#indicatorBox = null;
       }
     });
     indicator.setAssetRoot(this.path);
@@ -264,8 +285,12 @@ export default class QuotaGlanceExtension extends Extension {
     resolved.panel.addToStatusArea(
       this.uuid,
       indicator,
-      0,
-      resolved.target === 'dash-to-panel' ? 'center' : 'right',
+      panelBoxPosition(
+        box,
+        Main.sessionMode.panel.left?.length ?? 0,
+        'apps-menu' in Main.panel.statusArea,
+      ),
+      box,
     );
     this.#render();
   }

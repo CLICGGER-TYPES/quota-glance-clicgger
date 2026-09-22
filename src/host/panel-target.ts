@@ -1,5 +1,7 @@
 export type PanelTarget = 'dash-to-panel' | 'main';
 
+export type PanelBox = 'center' | 'left' | 'right';
+
 export interface DashToPanelEntry<TPanel> {
   geom?: {
     position?: number;
@@ -44,4 +46,41 @@ export function resolvePanel<TPanel>(
     panel: mainPanel,
     target: 'main',
   };
+}
+
+/**
+ * Which box of the panel hosts the indicator. A Dash to Panel bar only has a
+ * taskbar area, so the indicator always goes to its center; the GNOME main
+ * panel defaults to the left.
+ */
+export function resolvePanelBox(
+  target: PanelTarget,
+  requestedPosition: string | null | undefined,
+): PanelBox {
+  if (target === 'dash-to-panel')
+    return 'center';
+
+  if (requestedPosition === 'center' ||
+      requestedPosition === 'right' ||
+      requestedPosition === 'left') {
+    return requestedPosition;
+  }
+
+  return 'left';
+}
+
+/**
+ * Index inside the box. The left box already holds the items the session mode
+ * declares (Activities, the app menu), and the official gnome-shell-extensions
+ * pattern is to append after them (see places-menu).
+ */
+export function panelBoxPosition(
+  box: PanelBox,
+  leftItemCount: number,
+  hasAppsMenu: boolean,
+): number {
+  if (box !== 'left')
+    return 0;
+
+  return leftItemCount + (hasAppsMenu ? 1 : 0);
 }
