@@ -9,7 +9,7 @@ import {createTranslator} from '../.build-js/shared/i18n/index.js';
 const environment = new EnvironmentLoader().load();
 const http = new HttpClient(environment);
 const providers = createProviders(http, environment, createTranslator())
-    .filter(provider => ['zai', 'deepseek', 'opencode-go'].includes(provider.id));
+    .filter(provider => ['zai', 'deepseek', 'opencode-go', 'claude'].includes(provider.id));
 
 let failed = false;
 try {

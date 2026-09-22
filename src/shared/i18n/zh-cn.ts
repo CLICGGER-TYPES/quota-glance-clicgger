@@ -27,6 +27,7 @@ export const simplifiedChineseMessages = {
   'prefs.refresh.interval.title': '自动刷新间隔',
   'prefs.refresh.interval.subtitle': '两次额度更新之间的分钟数',
 
+  'provider.claude.description': 'Claude Code 套餐用量（会话 / 每周限额）',
   'provider.codex.description': '读取已登录 Codex CLI 的额度限制',
   'provider.copilot.description': '读取已登录 GitHub CLI 的高级请求额度',
   'provider.zai.description': 'Coding Plan 额度周期',
@@ -42,6 +43,11 @@ export const simplifiedChineseMessages = {
   'provider.common.remaining': '剩余 {remaining} / {total}',
   'provider.common.usageCount': '已使用 {value}',
   'provider.common.plan': '{plan} 方案',
+
+  'provider.claude.title': 'Claude',
+  'provider.claude.window.session': '当前会话',
+  'provider.claude.window.weekly': '每周 · 全部模型',
+  'provider.claude.window.scoped': '每周 · {name}',
 
   'provider.codex.account': 'Codex 账户',
   'provider.codex.unlimitedCredits': '点数无限',
@@ -85,4 +91,7 @@ export const simplifiedChineseMessages = {
     '请设置 OPENCODE_GO_AUTH_COOKIE 以启用 OpenCode Go',
   'error.codex.missingCli': '请安装并登录 Codex CLI',
   'error.copilot.missingCli': '请安装 GitHub CLI（gh）以使用 Copilot',
+  'error.claude.missingCredentials': '未找到 Claude Code 凭证，请先用 claude 命令登录',
+  'error.claude.signIn': 'Claude 会话已过期，运行一次 claude 即可续期',
+  'error.claude.missingCli': '请安装 claude 命令行工具以续期会话',
 } satisfies Messages;

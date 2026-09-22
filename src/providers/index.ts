@@ -2,6 +2,7 @@ import type {UsageProvider} from '../core/provider.js';
 import type {HttpClient} from '../runtime/http-client.js';
 import type {RuntimeEnvironment} from '../runtime/environment-parser.js';
 import {CommandRunner} from '../runtime/command-runner.js';
+import {ClaudeProvider} from './claude/provider.js';
 import {CodexProvider} from './codex/provider.js';
 import {CopilotProvider} from './copilot/provider.js';
 import {DeepSeekProvider} from './deepseek/provider.js';
@@ -16,6 +17,7 @@ export function createProviders(
 ): UsageProvider[] {
   const dependencies = {http, environment};
   return [
+    new ClaudeProvider(dependencies, translator),
     new CodexProvider(new CommandRunner(environment), translator),
     new CopilotProvider(new CommandRunner(environment), translator),
     new ZaiProvider(dependencies, translator),

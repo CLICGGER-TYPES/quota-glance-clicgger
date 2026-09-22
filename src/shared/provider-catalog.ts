@@ -8,6 +8,11 @@ export interface ProviderCatalogEntry {
 
 export const PROVIDER_CATALOG: readonly ProviderCatalogEntry[] = [
   {
+    id: 'claude',
+    name: 'Claude',
+    descriptionKey: 'provider.claude.description',
+  },
+  {
     id: 'codex',
     name: 'Codex',
     descriptionKey: 'provider.codex.description',

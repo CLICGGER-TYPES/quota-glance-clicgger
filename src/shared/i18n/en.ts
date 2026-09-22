@@ -26,6 +26,8 @@ export const englishMessages = {
   'prefs.refresh.interval.title': 'Automatic refresh interval',
   'prefs.refresh.interval.subtitle': 'Minutes between quota updates',
 
+  'provider.claude.description':
+    'Claude Code plan usage (session and weekly limits)',
   'provider.codex.description': 'Rate limits from the signed-in Codex CLI',
   'provider.copilot.description':
     'Premium requests from the signed-in GitHub CLI',
@@ -42,6 +44,11 @@ export const englishMessages = {
   'provider.common.remaining': '{remaining} / {total} remaining',
   'provider.common.usageCount': '{value} used',
   'provider.common.plan': 'Plan {plan}',
+
+  'provider.claude.title': 'Claude',
+  'provider.claude.window.session': 'Current session',
+  'provider.claude.window.weekly': 'Weekly · all models',
+  'provider.claude.window.scoped': 'Weekly · {name}',
 
   'provider.codex.account': 'Codex account',
   'provider.codex.unlimitedCredits': 'Unlimited credits',
@@ -85,6 +92,12 @@ export const englishMessages = {
     'Set OPENCODE_GO_AUTH_COOKIE to enable OpenCode Go',
   'error.codex.missingCli': 'Install and sign in to the Codex CLI',
   'error.copilot.missingCli': 'Install GitHub CLI (gh) to use Copilot',
+  'error.claude.missingCredentials':
+    'Claude Code credentials not found. Sign in with the claude CLI',
+  'error.claude.signIn':
+    'Claude session expired. Run claude once to renew it',
+  'error.claude.missingCli':
+    'Install the Claude CLI (claude) to renew the session',
 } as const;
 
 export type MessageKey = keyof typeof englishMessages;

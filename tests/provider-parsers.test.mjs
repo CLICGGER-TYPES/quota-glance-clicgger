@@ -24,6 +24,12 @@ import {
   parseCopilotResponse,
 } from '../.build-js/providers/copilot/parser.js';
 import {
+  compactWindowLabel,
+  formatPlanLabel,
+  parseClaudeUsageResponse,
+  selectWindow,
+} from '../.build-js/providers/claude/parser.js';
+import {
   parseCodexErrorFallback,
   parseCodexResponses,
   remainingCodexPercent,
@@ -157,4 +163,93 @@ test('Codex parser extracts WHAM JSON from legacy RPC errors', () => {
   assert.equal(data.email, 'legacy@example.com');
   assert.equal(data.primary.durationMinutes, 300);
   assert.equal(remainingCodexPercent(data.secondary), 70);
+});
+
+test('Claude parser reads the limits array and the legacy top level windows', async () => {
+  const payload = JSON.parse(
+    await readFile(path.join(fixtures, 'claude-usage.json'), 'utf8'),
+  );
+  const data = parseClaudeUsageResponse(payload, {
+    subscriptionType: 'pro',
+    rateLimitTier: 'default_claude_ai',
+  });
+
+  assert.equal(data.planLabel, 'Pro');
+  assert.equal(data.subscriptionType, 'pro');
+  assert.deepEqual(
+    data.limits.map(limit => limit.id),
+    ['five_hour', 'seven_day'],
+  );
+
+  const session = selectWindow(data, 'session');
+  assert.equal(session.usedPercent, 17);
+  assert.equal(session.remainingPercent, 83);
+  assert.equal(session.resetsAt, '2026-09-22T16:40:00.509317+00:00');
+  assert.equal(compactWindowLabel(session), '5h');
+
+  const weekly = selectWindow(data, 'weekly');
+  assert.equal(weekly.usedPercent, 61);
+  assert.equal(compactWindowLabel(weekly), '7d');
+
+  // Placeholder window for a model that is not in use carries 0% and no reset.
+  assert.equal(data.limits.some(limit => limit.id.includes('nimbus_quill')), false);
+});
+
+test('Claude parser keeps model scoped limits from the limits array', () => {
+  const data = parseClaudeUsageResponse({
+    five_hour: {utilization: 4, resets_at: null},
+    limits: [
+      {
+        kind: 'weekly_scoped',
+        percent: 33.3,
+        resets_at: '2026-09-26T11:00:00.509339+00:00',
+        scope: {model: {id: 'claude-fable-5', display_name: 'Fable'}},
+      },
+      {
+        kind: 'weekly_scoped',
+        percent: 0,
+        resets_at: null,
+        scope: {model: {id: 'future-model', display_name: 'Future Model'}},
+      },
+    ],
+  });
+
+  assert.deepEqual(
+    data.limits.map(limit => limit.id),
+    ['five_hour', 'scoped:Fable'],
+  );
+  const scoped = data.limits[1];
+  assert.equal(scoped.modelName, 'Fable');
+  assert.equal(scoped.usedPercent, 33.3);
+  assert.equal(compactWindowLabel(scoped), 'Fab');
+});
+
+test('Claude parser falls back to top level windows without a limits array', () => {
+  const data = parseClaudeUsageResponse({
+    five_hour: {utilization: 120, resets_at: '2026-09-22T16:40:00+00:00'},
+    seven_day: {utilization: -5},
+    seven_day_sonnet: {utilization: 12.5, resets_at: null},
+  });
+
+  assert.deepEqual(
+    data.limits.map(limit => [limit.id, limit.usedPercent]),
+    [['five_hour', 100], ['seven_day', 0], ['scoped:Sonnet', 12.5]],
+  );
+});
+
+test('Claude parser rejects payloads with no usable window', () => {
+  assert.throws(
+    () => parseClaudeUsageResponse({limits: [], extra_usage: {is_enabled: false}}),
+    /Claude returned no supported usage limits/,
+  );
+  assert.throws(() => parseClaudeUsageResponse(null), /no supported usage limits/);
+});
+
+test('Claude plan labels map subscription types and rate limit tiers', () => {
+  assert.equal(formatPlanLabel('pro', 'default_claude_ai'), 'Pro');
+  assert.equal(formatPlanLabel('max', 'claude_max_20x'), 'Max (20x)');
+  assert.equal(formatPlanLabel('max', 'claude_max_5x'), 'Max (5x)');
+  assert.equal(formatPlanLabel('max', null), 'Max');
+  assert.equal(formatPlanLabel('free', null), 'Free');
+  assert.equal(formatPlanLabel(null, null), null);
 });
