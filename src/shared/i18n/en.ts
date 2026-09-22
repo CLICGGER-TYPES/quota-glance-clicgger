@@ -27,6 +27,11 @@ export const englishMessages = {
   'prefs.panel.side.right': 'Right',
   'prefs.panel.top': 'GNOME top panel',
   'prefs.panel.bottom': 'Dash to Panel bottom panel',
+  'prefs.proxy.title': 'Proxy',
+  'prefs.proxy.description':
+    'Used for provider requests and for the CLI providers. Empty keeps the proxy from the environment.',
+  'prefs.proxy.url.title': 'Proxy URL (http://host:port)',
+  'prefs.proxy.noProxy.title': 'Bypass the proxy for',
   'prefs.refresh.title': 'Refresh',
   'prefs.refresh.interval.title': 'Automatic refresh interval',
   'prefs.refresh.interval.subtitle': 'Minutes between quota updates',

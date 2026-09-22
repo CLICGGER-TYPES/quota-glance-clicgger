@@ -66,6 +66,7 @@ const requiredEntries = [
   'providers/claude/provider.js',
   'providers/claude/parser.js',
   'runtime/claude-auth.js',
+  'runtime/proxy-settings.js',
   'runtime/claude-credentials.js',
   'providers/codex/provider.js',
   'providers/copilot/provider.js',

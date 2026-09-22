@@ -33,6 +33,16 @@
       <summary>Position inside the GNOME main panel</summary>
       <description>Which box of the main panel hosts Quota Glance. Ignored on Dash to Panel.</description>
     </key>
+    <key name="proxy-url" type="s">
+      <default>''</default>
+      <summary>Proxy URL used for provider requests</summary>
+      <description>Overrides the proxy from the environment. Empty keeps the environment value.</description>
+    </key>
+    <key name="proxy-no-proxy" type="s">
+      <default>'localhost,127.0.0.1,::1'</default>
+      <summary>Hosts that bypass the proxy</summary>
+      <description>Comma separated list passed to the proxy resolver.</description>
+    </key>
     <key name="dash-to-panel-available" type="b">
       <default>false</default>
       <summary>Bottom Dash to Panel availability</summary>

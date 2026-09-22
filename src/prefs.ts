@@ -8,6 +8,10 @@ import {
 
 import {PROVIDER_CATALOG} from './shared/provider-catalog.js';
 import {
+  SETTINGS_PROXY_NO_PROXY,
+  SETTINGS_PROXY_URL,
+} from './runtime/proxy-settings.js';
+import {
   createTranslator,
   type Translator,
 } from './shared/i18n/index.js';
@@ -31,8 +35,56 @@ export default class QuotaGlancePreferences extends ExtensionPreferences {
 
     page.add(this.#createProviderGroup(settings, translator));
     page.add(this.#createPanelGroup(settings, translator));
+    page.add(this.#createProxyGroup(settings, translator));
     page.add(this.#createRefreshGroup(settings, translator));
     window.add(page);
+  }
+
+  /** Proxy for provider requests and for the CLI providers we spawn. An empty
+   *  URL keeps whatever the environment provides. */
+  #createProxyGroup(
+    settings: Gio.Settings,
+    translator: Translator,
+  ): Adw.PreferencesGroup {
+    const group = new Adw.PreferencesGroup({
+      title: translator.t('prefs.proxy.title'),
+      description: translator.t('prefs.proxy.description'),
+    });
+    group.add(this.#createEntryRow(
+      settings,
+      SETTINGS_PROXY_URL,
+      translator.t('prefs.proxy.url.title'),
+    ));
+    group.add(this.#createEntryRow(
+      settings,
+      SETTINGS_PROXY_NO_PROXY,
+      translator.t('prefs.proxy.noProxy.title'),
+    ));
+    return group;
+  }
+
+  /** Committed on Enter / the apply button, so typing does not trigger a
+   *  refresh per keystroke. */
+  #createEntryRow(
+    settings: Gio.Settings,
+    key: string,
+    title: string,
+  ): Adw.EntryRow {
+    const row = new Adw.EntryRow({
+      title,
+      showApplyButton: true,
+      text: settings.get_string(key),
+    });
+    row.connect('apply', () => {
+      settings.set_string(key, row.text);
+      row.set_show_apply_button(false);
+    });
+    settings.connect(`changed::${key}`, () => {
+      const value = settings.get_string(key);
+      if (row.text !== value)
+        row.text = value;
+    });
+    return row;
   }
 
   #createProviderGroup(

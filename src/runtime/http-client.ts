@@ -38,23 +38,18 @@ export class HttpClient {
 
   constructor(environment: RuntimeEnvironment = {}) {
     this.#session = new Soup.Session();
-    const httpProxy = environment.HTTP_PROXY ?? environment.http_proxy;
-    const httpsProxy = environment.HTTPS_PROXY ?? environment.https_proxy;
-    if (httpProxy || httpsProxy) {
-      const noProxy = (environment.NO_PROXY ?? environment.no_proxy)
-        ?.split(',')
-        .map(host => host.trim())
-        .filter(Boolean) ?? null;
-      const resolver = Gio.SimpleProxyResolver.new(
-        null,
-        noProxy,
-      ) as Gio.SimpleProxyResolver;
-      if (httpProxy)
-        resolver.set_uri_proxy('http', httpProxy);
-      if (httpsProxy)
-        resolver.set_uri_proxy('https', httpsProxy);
-      this.#session.proxyResolver = resolver;
-    }
+    this.updateProxy(environment);
+  }
+
+  /**
+   * Re-reads the proxy of the (mutable) runtime environment. Called when the
+   * proxy preference changes, so no extension reload is needed.
+   */
+  updateProxy(environment: RuntimeEnvironment = {}): void {
+    if (this.#disposed)
+      return;
+
+    this.#session.proxyResolver = createProxyResolver(environment);
   }
 
   async request(
@@ -210,6 +205,29 @@ export class HttpClient {
     this.#disposed = true;
     this.#session.abort();
   }
+}
+
+function createProxyResolver(
+  environment: RuntimeEnvironment,
+): Gio.ProxyResolver | null {
+  const httpProxy = environment.HTTP_PROXY ?? environment.http_proxy;
+  const httpsProxy = environment.HTTPS_PROXY ?? environment.https_proxy;
+  if (!httpProxy && !httpsProxy)
+    return null;
+
+  const noProxy = (environment.NO_PROXY ?? environment.no_proxy)
+    ?.split(',')
+    .map(host => host.trim())
+    .filter(Boolean) ?? null;
+  const resolver = Gio.SimpleProxyResolver.new(
+    null,
+    noProxy,
+  ) as Gio.SimpleProxyResolver;
+  if (httpProxy)
+    resolver.set_uri_proxy('http', httpProxy);
+  if (httpsProxy)
+    resolver.set_uri_proxy('https', httpsProxy);
+  return resolver;
 }
 
 function readHeaders(headers: Soup.MessageHeaders): Record<string, string> {

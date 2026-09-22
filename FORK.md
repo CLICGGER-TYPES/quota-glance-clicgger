@@ -14,6 +14,7 @@
 | `src/providers/claude/provider.ts` | 渠道实现:读凭证 → 打用量接口 → 401/403 时让 CLI 续期一次 → 重试;面板只显示本周剩余一个数 |
 | `src/core/controller.ts` | 网络类失败(`http` / `timeout`)的短延时重试阶梯 10s → 30s → 90s |
 | `src/host/panel-target.ts`、`src/extension.ts`、`src/prefs.ts`、`schemas/*.gschema.xml` | 新增 `panel-position` 设置(左/中/右),默认**左侧** |
+| `src/runtime/proxy-settings.ts`、`src/runtime/http-client.ts`、`src/prefs.ts` | 首选项里的代理设置，覆盖环境变量，改完即时生效 |
 | `src/providers/claude/parser.ts` | 用量报文归一化(`limits[]` 与旧版顶层窗口两种形态) |
 | `src/runtime/claude-credentials.ts` | 只读 `~/.claude/.credentials.json`(每次 collect 重新读,CLI 轮换的 token 自动生效) |
 | `src/runtime/claude-auth.ts` | 续期:spawn `claude auth login --claudeai`,refresh token 走环境变量,45s 超时 |
@@ -97,6 +98,21 @@ Main.panel.addToStatusArea(uuid, indicator, pos, 'left');
 
 设置里多了一个「顶栏位置:左侧 / 中间 / 右侧」(schema 键 `panel-position`),**改完立即生效,不用重登** ——
 `changed::panel-position` 会重新挂载指示器。Dash to Panel 那边固定进中间任务栏区,不受这个设置影响。
+
+## 代理设置
+
+首选项里有「代理」一组，两个可编辑项：
+
+- **代理地址**（`proxy-url`）—— 例如 `http://127.0.0.1:2080`，会同时写入 `HTTP_PROXY` / `HTTPS_PROXY` / 小写两个
+- **不走代理的地址**（`proxy-no-proxy`）—— 默认 `localhost,127.0.0.1,::1`
+
+行为：
+
+- 留空 = **沿用环境里的代理**（`/etc/environment`、`~/.config/environment.d/*.conf`、`~/.config/quota-glance/env`）
+- 填上 = 覆盖上面那四个键；再清空会回退到环境值（实现是先把 6 个代理变量恢复成 base 再覆盖）
+- **即时生效**：改动就地修改共享的 environment 对象，`HttpClient.updateProxy()` 重建 resolver 并立即重新取数；
+  同一个对象也让 spawn 出的命令（`command-runner`、Claude 续期）同步生效，所以**不用重登**
+- 输入按回车 / 点应用按钮后才提交，不会每敲一个字触发一次请求
 
 ## 依赖的环境变量
 

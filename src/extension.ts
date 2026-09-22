@@ -22,6 +22,13 @@ import {
 } from './host/panel-target.js';
 import {createProviders} from './providers/index.js';
 import {EnvironmentLoader} from './runtime/environment-loader.js';
+import type {RuntimeEnvironment} from './runtime/environment-parser.js';
+import {
+  applyProxySettings,
+  proxySettings,
+  SETTINGS_PROXY_NO_PROXY,
+  SETTINGS_PROXY_URL,
+} from './runtime/proxy-settings.js';
 import {HttpClient} from './runtime/http-client.js';
 import {
   createTranslator,
@@ -58,6 +65,8 @@ export default class QuotaGlanceExtension extends Extension {
   #indicatorHost: PanelHost | null = null;
   #indicatorBox: PanelBox | null = null;
   #providers: UsageProvider[] = [];
+  #baseEnvironment: RuntimeEnvironment | null = null;
+  #environment: RuntimeEnvironment | null = null;
   #scheduler: RefreshScheduler | null = null;
   #settings: Gio.Settings | null = null;
   #settingsSignalIds: number[] = [];
@@ -67,7 +76,13 @@ export default class QuotaGlanceExtension extends Extension {
 
   enable(): void {
     this.#settings = this.getSettings();
-    const environment = new EnvironmentLoader().load();
+    const baseEnvironment = new EnvironmentLoader().load();
+    // The proxy from the preferences window is overlaid on this object in
+    // place, so the providers and the command runner always see it.
+    const environment = {...baseEnvironment};
+    applyProxySettings(environment, baseEnvironment, proxySettings(this.#settings));
+    this.#baseEnvironment = baseEnvironment;
+    this.#environment = environment;
     this.#http = new HttpClient(environment);
     this.#providers = createProviders(
       this.#http,
@@ -113,6 +128,14 @@ export default class QuotaGlanceExtension extends Extension {
       this.#settings.connect(
         `changed::${SETTINGS_PANEL_POSITION}`,
         () => this.#mountIndicator(),
+      ),
+      this.#settings.connect(
+        `changed::${SETTINGS_PROXY_URL}`,
+        () => this.#onProxySettingsChanged(),
+      ),
+      this.#settings.connect(
+        `changed::${SETTINGS_PROXY_NO_PROXY}`,
+        () => this.#onProxySettingsChanged(),
       ),
     );
 
@@ -171,6 +194,8 @@ export default class QuotaGlanceExtension extends Extension {
 
     this.#http?.dispose();
     this.#http = null;
+    this.#baseEnvironment = null;
+    this.#environment = null;
 
     this.#indicator?.destroy();
     this.#indicator = null;
@@ -229,6 +254,19 @@ export default class QuotaGlanceExtension extends Extension {
     return this.#settings?.get_string(SETTINGS_PANEL_TARGET) === 'main'
       ? 'main'
       : 'dash-to-panel';
+  }
+
+  #onProxySettingsChanged(): void {
+    if (!this.#settings || !this.#baseEnvironment || !this.#environment)
+      return;
+
+    applyProxySettings(
+      this.#environment,
+      this.#baseEnvironment,
+      proxySettings(this.#settings),
+    );
+    this.#http?.updateProxy(this.#environment);
+    void this.#controller?.refreshAll();
   }
 
   #mountIndicator(): void {
