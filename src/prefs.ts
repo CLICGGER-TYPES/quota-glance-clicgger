@@ -13,8 +13,8 @@ import {
   SETTINGS_PROXY_URL,
 } from './runtime/proxy-settings.js';
 import {
-  effectiveIntervalMinutes,
   normalizeIntervals,
+  providerMinimumMinutes,
   SETTINGS_PROVIDER_INTERVAL,
   withProviderInterval,
 } from './runtime/provider-intervals.js';
@@ -289,7 +289,8 @@ export default class QuotaGlancePreferences extends ExtensionPreferences {
   }
 
   /** Per-provider throttle: the Claude usage endpoint, for instance, answers
-   *  429 when it is polled too often. 0 means "follow the global interval". */
+   *  429 when it is polled too often. The row shows the provider's own value,
+   *  where 0 means "follow the global interval". */
   #createProviderIntervalRow(
     settings: Gio.Settings,
     translator: Translator,
@@ -308,11 +309,7 @@ export default class QuotaGlancePreferences extends ExtensionPreferences {
         upper: 240,
         stepIncrement: 5,
         pageIncrement: 30,
-        value: effectiveIntervalMinutes(
-          read(),
-          provider.id,
-          settings.get_int(SETTINGS_REFRESH_INTERVAL),
-        ),
+        value: providerMinimumMinutes(read(), provider.id),
       }),
       digits: 0,
       numeric: true,
@@ -324,23 +321,24 @@ export default class QuotaGlancePreferences extends ExtensionPreferences {
       if (syncing)
         return;
 
-      const next = withProviderInterval(
-        read(),
-        provider.id,
-        Math.round(row.value),
-      );
+      const current = read();
+      const wanted = Math.round(row.value);
+      // Nothing to do when the value already means the same thing; this also
+      // keeps a stray notify from resurrecting an old override.
+      if (providerMinimumMinutes(current, provider.id) === wanted)
+        return;
+
       settings.set_value(
         SETTINGS_PROVIDER_INTERVAL,
-        new GLib.Variant('a{si}', next),
+        new GLib.Variant(
+          'a{si}',
+          withProviderInterval(current, provider.id, wanted),
+        ),
       );
     });
     settings.connect(`changed::${SETTINGS_PROVIDER_INTERVAL}`, () => {
       syncing = true;
-      row.value = effectiveIntervalMinutes(
-        read(),
-        provider.id,
-        settings.get_int(SETTINGS_REFRESH_INTERVAL),
-      );
+      row.value = providerMinimumMinutes(read(), provider.id);
       syncing = false;
     });
     return row;
