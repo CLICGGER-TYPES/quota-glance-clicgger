@@ -258,12 +258,29 @@ function throwHttpStatus(
   );
   const authenticationFailure =
     response.status === 401 || response.status === 403;
+  const retryAfterSeconds = parseRetryAfter(
+    response.headers['retry-after'],
+  );
 
   throw new ProviderRuntimeError(
     authenticationFailure ? 'not-authenticated' : 'http',
     authenticationFailure
       ? `Authentication failed (HTTP ${response.status})`
       : `HTTP ${response.status}: ${body}`,
-    {retryable: !authenticationFailure},
+    {
+      httpStatus: response.status,
+      retryAfterSeconds: retryAfterSeconds ?? undefined,
+      // A server that told us when to come back should not be retried in a
+      // hurry; everything else that is not an auth failure may be retried.
+      retryable: !authenticationFailure && retryAfterSeconds === null,
+    },
   );
+}
+
+function parseRetryAfter(value: string | undefined): number | null {
+  if (value === undefined)
+    return null;
+
+  const seconds = Number.parseInt(value, 10);
+  return Number.isFinite(seconds) && seconds > 0 ? seconds : null;
 }

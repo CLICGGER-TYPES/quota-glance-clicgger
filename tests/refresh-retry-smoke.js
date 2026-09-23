@@ -88,3 +88,50 @@ hopelessController.dispose();
 controller.dispose();
 
 print('refresh retry smoke test passed');
+
+// A server that asked us to wait (429 + retry-after) must not be retried in a
+// hurry: the periodic refresh owns it instead.
+function createRateLimitedProvider(id) {
+    let attempts = 0;
+    return {
+        id,
+        name: id,
+        order: 1,
+        enabledByDefault: true,
+        get attempts() {
+            return attempts;
+        },
+        collect() {
+            attempts += 1;
+            return Promise.reject(new ProviderRuntimeError(
+                'http', 'HTTP 429', {
+                    httpStatus: 429,
+                    retryAfterSeconds: 3600,
+                    retryable: false,
+                }));
+        },
+        getPanelItems() {
+            return [];
+        },
+        getPopupViewModel() {
+            return {
+                title: id, metrics: [], details: [], phase: 'error', stale: false,
+            };
+        },
+        dispose() {},
+    };
+}
+
+const limited = createRateLimitedProvider('limited');
+store.initializeProvider('limited', true);
+const limitedController = new RefreshController([limited], store, {
+    retryDelaysSeconds: [1, 1],
+});
+await limitedController.refreshAll();
+await delay(4);
+if (limited.attempts !== 1) {
+    throw new Error(
+        `A rate limited provider must not be fast-retried, got ${limited.attempts}`);
+}
+limitedController.dispose();
+

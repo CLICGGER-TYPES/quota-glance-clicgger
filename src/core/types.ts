@@ -13,6 +13,10 @@ export type ProviderErrorCode =
 
 export interface ProviderError {
   code: ProviderErrorCode;
+  /** HTTP status when the failure came from a response (not from transport). */
+  httpStatus?: number;
+  /** Seconds the server asked us to wait (`retry-after`). */
+  retryAfterSeconds?: number;
   message: string;
   debugMessage?: string;
   localized?: boolean;

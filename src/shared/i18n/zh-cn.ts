@@ -102,5 +102,9 @@ export const simplifiedChineseMessages = {
   'error.copilot.missingCli': '请安装 GitHub CLI（gh）以使用 Copilot',
   'error.claude.missingCredentials': '未找到 Claude Code 凭证，请先用 claude 命令登录',
   'error.claude.signIn': 'Claude 会话已过期，运行一次 claude 即可续期',
+  'error.claude.rateLimited':
+    'Claude 用量接口被限流（HTTP 429），约 {minutes} 分钟后自动重试',
+  'error.claude.serverError': 'Anthropic 服务暂时不可用（HTTP {status}）',
+  'error.claude.httpStatus': 'Anthropic 返回 HTTP {status}',
   'error.claude.missingCli': '请安装 claude 命令行工具以续期会话',
 } satisfies Messages;

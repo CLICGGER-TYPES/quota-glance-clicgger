@@ -35,6 +35,9 @@ const ENDPOINT = 'https://api.anthropic.com/api/oauth/usage';
  */
 const OAUTH_BETA = 'oauth-2025-04-20';
 
+/** Used when a 429 does not say how long to wait. */
+const RATE_LIMIT_FALLBACK_SECONDS = 900;
+
 export class ClaudeProvider implements UsageProvider<ClaudeData> {
   readonly id = 'claude';
   readonly name = 'Claude';
@@ -43,6 +46,8 @@ export class ClaudeProvider implements UsageProvider<ClaudeData> {
   readonly #dependencies: HttpProviderDependencies;
   readonly #translator: Translator;
   readonly #auth: ClaudeAuth;
+  /** The usage endpoint rate limits for minutes at a time; wait it out. */
+  #rateLimitedUntil = 0;
 
   constructor(
     dependencies: HttpProviderDependencies,
@@ -54,6 +59,7 @@ export class ClaudeProvider implements UsageProvider<ClaudeData> {
   }
 
   async collect(cancellable: Gio.Cancellable): Promise<ClaudeData> {
+    this.#throwIfRateLimited();
     const credential = await this.#readCredential();
     try {
       return await this.#requestUsage(credential, cancellable);
@@ -61,7 +67,8 @@ export class ClaudeProvider implements UsageProvider<ClaudeData> {
       // An expired access token is normal: Claude Code renews it on demand,
       // so ask the CLI to do the same once before reporting a failure.
       if (!isAuthenticationFailure(caught))
-        throw caught;
+        throw this.#describeHttpFailure(caught);
+
       const renewed = await this.#renew(credential, caught);
       if (!renewed) {
         throw new ProviderRuntimeError(
@@ -72,7 +79,14 @@ export class ClaudeProvider implements UsageProvider<ClaudeData> {
       }
     }
 
-    return this.#requestUsage(await this.#readCredential(), cancellable);
+    try {
+      return await this.#requestUsage(
+        await this.#readCredential(),
+        cancellable,
+      );
+    } catch (caught) {
+      throw this.#describeHttpFailure(caught);
+    }
   }
 
   getPanelItems(state: ProviderState<ClaudeData>): PanelItem[] {
@@ -143,6 +157,65 @@ export class ClaudeProvider implements UsageProvider<ClaudeData> {
       subscriptionType: credential.subscriptionType,
       rateLimitTier: credential.rateLimitTier,
     });
+  }
+
+  /**
+   * HTTP status failures get a message that says what actually happened. The
+   * generic "network request failed" text is reserved for transport errors.
+   */
+  #describeHttpFailure(caught: unknown): unknown {
+    if (!(caught instanceof ProviderRuntimeError) ||
+        caught.httpStatus === undefined) {
+      return caught;
+    }
+
+    const status = caught.httpStatus;
+    if (status === 429) {
+      const seconds = caught.retryAfterSeconds ?? RATE_LIMIT_FALLBACK_SECONDS;
+      this.#rateLimitedUntil = Date.now() + seconds * 1000;
+      return new ProviderRuntimeError(
+        'http',
+        this.#translator.t('error.claude.rateLimited', {
+          minutes: Math.max(1, Math.ceil(seconds / 60)),
+        }),
+        {
+          cause: caught,
+          httpStatus: status,
+          localized: true,
+          retryAfterSeconds: seconds,
+          retryable: false,
+        },
+      );
+    }
+
+    if (status >= 500) {
+      return new ProviderRuntimeError(
+        'http',
+        this.#translator.t('error.claude.serverError', {status}),
+        {cause: caught, httpStatus: status, localized: true, retryable: true},
+      );
+    }
+
+    return new ProviderRuntimeError(
+      'http',
+      this.#translator.t('error.claude.httpStatus', {status}),
+      {cause: caught, httpStatus: status, localized: true, retryable: false},
+    );
+  }
+
+  /** The endpoint rate limits for minutes at a time: skip it until then. */
+  #throwIfRateLimited(): void {
+    const remaining = this.#rateLimitedUntil - Date.now();
+    if (remaining <= 0)
+      return;
+
+    throw new ProviderRuntimeError(
+      'http',
+      this.#translator.t('error.claude.rateLimited', {
+        minutes: Math.max(1, Math.ceil(remaining / 60_000)),
+      }),
+      {httpStatus: 429, localized: true, retryable: false},
+    );
   }
 
   async #renew(

@@ -48,6 +48,10 @@ parseClaudeUsageResponse()  →  five_hour / seven_day / 模型级窗口
 要点与坑:
 
 - **该接口 Anthropic 未公开文档**,基于 Claude Code `/usage` 屏幕所用端点,服务端改动可能让它失效。
+- **限流(429)**:`/api/oauth/usage` 会被 Anthropic 限流并返回 `retry-after`(实测约 1 小时)。现在:
+  429 不再被当成「网络请求失败」,而是显示「Claude 用量接口被限流(HTTP 429),约 N 分钟后自动重试」;
+  记下限流窗口后就**不再打服务端**(第二次调用 0ms),也不参与 10s/30s/90s 的快速重试梯子,交给周期性刷新。
+  面板数字会保留上次成功的数据,不会清空。
 - **必须走代理**:直连 `api.anthropic.com` 返回 403(`Request not allowed`),本机实测经 `http://127.0.0.1:2080` 才返回 200。
   扩展本身不读 GNOME 系统代理,代理只能从环境变量给(`~/.config/quota-glance/env`,见下)。
 - **登录竞态**:GNOME Shell 起来后 1 秒就发起首次刷新,而本机 v2rayN/xray 是会话自动启动的(实测 shell 20:07:56 → v2rayN 20:08:00 → xray 20:08:03),

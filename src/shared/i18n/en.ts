@@ -106,6 +106,10 @@ export const englishMessages = {
     'Claude Code credentials not found. Sign in with the claude CLI',
   'error.claude.signIn':
     'Claude session expired. Run claude once to renew it',
+  'error.claude.rateLimited':
+    'Claude usage is rate limited (HTTP 429). Retrying in about {minutes} min',
+  'error.claude.serverError': 'Anthropic is unavailable (HTTP {status})',
+  'error.claude.httpStatus': 'Anthropic returned HTTP {status}',
   'error.claude.missingCli':
     'Install the Claude CLI (claude) to renew the session',
 } as const;
