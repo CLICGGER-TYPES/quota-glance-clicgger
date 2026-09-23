@@ -135,3 +135,35 @@ if (limited.attempts !== 1) {
 }
 limitedController.dispose();
 
+// The per-provider throttle keeps a chatty endpoint out of trouble; a manual
+// refresh (force) still goes through.
+const throttled = createFlakyProvider('throttled', 0);
+store.initializeProvider('throttled', true);
+let clock = 1_000_000;
+const throttledController = new RefreshController([throttled], store, {
+    minIntervalMinutes: id => (id === 'throttled' ? 30 : 0),
+    now: () => clock,
+});
+const firstRun = await throttledController.refreshAll();
+if (!firstRun.started || throttled.attempts !== 1) {
+    throw new Error(`First refresh should run, attempts=${throttled.attempts}`);
+}
+// 29 minutes later it is still too early.
+clock += 29 * 60_000;
+const early = await throttledController.refreshAll();
+if (early.started || throttled.attempts !== 1) {
+    throw new Error(`The throttle must skip the refresh, attempts=${throttled.attempts}`);
+}
+// A manual refresh bypasses the throttle.
+await throttledController.refreshAll({force: true});
+if (throttled.attempts !== 2) {
+    throw new Error(`force must bypass the throttle, attempts=${throttled.attempts}`);
+}
+// After the interval it runs on its own again.
+clock += 31 * 60_000;
+await throttledController.refreshAll();
+if (throttled.attempts !== 3) {
+    throw new Error(`The provider should be due again, attempts=${throttled.attempts}`);
+}
+throttledController.dispose();
+

@@ -22,6 +22,11 @@ import {
 } from './host/panel-target.js';
 import {createProviders} from './providers/index.js';
 import {EnvironmentLoader} from './runtime/environment-loader.js';
+import {
+  normalizeIntervals,
+  providerMinimumMinutes,
+  SETTINGS_PROVIDER_INTERVAL,
+} from './runtime/provider-intervals.js';
 import type {RuntimeEnvironment} from './runtime/environment-parser.js';
 import {
   applyProxySettings,
@@ -101,7 +106,12 @@ export default class QuotaGlanceExtension extends Extension {
       );
     }
 
-    this.#controller = new RefreshController(this.#providers, this.#store);
+    this.#controller = new RefreshController(this.#providers, this.#store, {
+      minIntervalMinutes: providerId => providerMinimumMinutes(
+        this.#providerIntervals(),
+        providerId,
+      ),
+    });
 
     this.#storeUnsubscribe = this.#store.subscribe(() => this.#render());
     this.#controllerUnsubscribe = this.#controller.subscribe(
@@ -246,6 +256,12 @@ export default class QuotaGlanceExtension extends Extension {
     }
   }
 
+  #providerIntervals() {
+    return normalizeIntervals(
+      this.#settings?.get_value(SETTINGS_PROVIDER_INTERVAL).deepUnpack() ?? {},
+    );
+  }
+
   #getRefreshInterval(): number {
     return this.#settings?.get_int(SETTINGS_REFRESH_INTERVAL) ?? 5;
   }
@@ -307,7 +323,7 @@ export default class QuotaGlanceExtension extends Extension {
     indicator.setTranslator(this.#translator);
     indicator.setCallbacks(
       () => {
-        void this.#controller?.refreshAll();
+        void this.#controller?.refreshAll({force: true});
       },
       () => {
         this.openPreferences();

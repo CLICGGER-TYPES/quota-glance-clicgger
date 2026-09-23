@@ -35,6 +35,8 @@ export const simplifiedChineseMessages = {
   'prefs.refresh.title': '刷新',
   'prefs.refresh.interval.title': '自动刷新间隔',
   'prefs.refresh.interval.subtitle': '两次额度更新之间的分钟数',
+  'prefs.refresh.provider.title': '{name} 最小请求间隔',
+  'prefs.refresh.provider.subtitle': '该渠道两次请求之间的最少分钟数；0 = 跟随全局间隔',
 
   'provider.claude.description': 'Claude Code 套餐用量（会话 / 每周限额）',
   'provider.codex.description': '读取已登录 Codex CLI 的额度限制',

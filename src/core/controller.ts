@@ -21,13 +21,25 @@ type ControllerListener = () => void;
 const DEFAULT_RETRY_DELAYS_SECONDS = [10, 30, 90];
 
 export interface RefreshControllerOptions {
+  /** Injectable clock, used by the smoke test. */
+  now?: () => number;
+  /** Minutes a provider must wait between two requests; 0 = no throttle. */
+  minIntervalMinutes?: (providerId: string) => number;
   retryDelaysSeconds?: readonly number[];
+}
+
+export interface RefreshRequestOptions {
+  /** The user asked for it: ignore the per-provider throttle. */
+  force?: boolean;
 }
 
 export class RefreshController {
   readonly #providers: UsageProvider[];
   readonly #store: StateStore;
   readonly #listeners = new Set<ControllerListener>();
+  readonly #lastAttemptAt = new Map<string, number>();
+  readonly #minIntervalMinutes: (providerId: string) => number;
+  readonly #now: () => number;
   readonly #retryDelays: readonly number[];
   readonly #pendingRetryIds = new Set<string>();
   #cancellable: Gio.Cancellable | null = null;
@@ -44,6 +56,8 @@ export class RefreshController {
   ) {
     this.#providers = providers;
     this.#store = store;
+    this.#minIntervalMinutes = options.minIntervalMinutes ?? (() => 0);
+    this.#now = options.now ?? (() => Date.now());
     this.#retryDelays = options.retryDelaysSeconds ??
       DEFAULT_RETRY_DELAYS_SECONDS;
   }
@@ -57,7 +71,9 @@ export class RefreshController {
     return () => this.#listeners.delete(listener);
   }
 
-  async refreshAll(): Promise<RefreshSummary> {
+  async refreshAll(
+    options: RefreshRequestOptions = {},
+  ): Promise<RefreshSummary> {
     if (this.#disposed || this.#refreshing)
       return {started: false, results: []};
 
@@ -66,10 +82,13 @@ export class RefreshController {
     if (providers.length === 0)
       return {started: false, results: []};
 
-    return this.#refreshProviders(providers);
+    return this.#refreshProviders(providers, options.force ?? false);
   }
 
-  async refreshProvider(providerId: string): Promise<RefreshSummary> {
+  async refreshProvider(
+    providerId: string,
+    options: RefreshRequestOptions = {},
+  ): Promise<RefreshSummary> {
     if (this.#disposed || this.#refreshing)
       return {started: false, results: []};
 
@@ -78,7 +97,7 @@ export class RefreshController {
     if (!provider || !this.#store.get(providerId)?.enabled)
       return {started: false, results: []};
 
-    return this.#refreshProviders([provider]);
+    return this.#refreshProviders([provider], options.force ?? false);
   }
 
   setProviderEnabled(providerId: string, enabled: boolean): void {
@@ -88,7 +107,7 @@ export class RefreshController {
 
     this.#store.setEnabled(providerId, enabled);
     if (enabled)
-      void this.refreshProvider(providerId);
+      void this.refreshProvider(providerId, {force: true});
   }
 
   cancelCurrentRefresh(): void {
@@ -111,7 +130,15 @@ export class RefreshController {
 
   async #refreshProviders(
     providers: UsageProvider[],
+    force: boolean,
   ): Promise<RefreshSummary> {
+    const now = this.#now();
+    const due = force
+      ? providers
+      : providers.filter(provider => this.#isDue(provider.id, now));
+    if (due.length === 0)
+      return {started: false, results: []};
+
     this.#refreshing = true;
     this.#emit();
 
@@ -119,11 +146,13 @@ export class RefreshController {
     const cancellable = new Gio.Cancellable();
     this.#cancellable = cancellable;
 
-    for (const provider of providers)
+    for (const provider of due) {
+      this.#lastAttemptAt.set(provider.id, now);
       this.#store.markLoading(provider.id);
+    }
 
     const results = await Promise.all(
-      providers.map(provider =>
+      due.map(provider =>
         this.#collectProvider(provider, cancellable, generation)),
     );
 
@@ -179,10 +208,22 @@ export class RefreshController {
         }
 
         for (const providerId of providerIds)
-          void this.refreshProvider(providerId);
+          void this.refreshProvider(providerId, {force: true});
         return GLib.SOURCE_REMOVE;
       },
     );
+  }
+
+  #isDue(providerId: string, now: number): boolean {
+    const minutes = this.#minIntervalMinutes(providerId);
+    if (!(minutes > 0))
+      return true;
+
+    const lastAttempt = this.#lastAttemptAt.get(providerId);
+    if (lastAttempt === undefined)
+      return true;
+
+    return now - lastAttempt >= minutes * 60_000;
   }
 
   #resetRetry(): void {

@@ -123,6 +123,17 @@ Main.panel.addToStatusArea(uuid, indicator, pos, 'left');
   同一个对象也让 spawn 出的命令（`command-runner`、Claude 续期）同步生效，所以**不用重登**
 - 输入按回车 / 点应用按钮后才提交，不会每敲一个字触发一次请求
 
+## 每渠道限速(最小请求间隔)
+
+设置键 `provider-interval-minutes`(类型 `a{si}`,默认 `{'claude': 30}`):
+
+- 每个渠道可设自己的「最小请求间隔(分钟)」,0 或没有条目 = 跟随全局「自动刷新间隔」
+- 默认给 Claude 30 分钟,因为 `/api/oauth/usage` 被轮询太密会返回 429(实测 `retry-after` 约 1 小时)
+- 在 `RefreshController` 里生效(`#isDue`),**不消耗网络请求**:没到点就直接跳过,不发请求
+- 面板里的「刷新」按钮 = 用户显式要求,走 `refreshAll({force: true})` **绕过限速**;失败重试梯子也走 force
+  (限流窗口是服务端定的,那个由 Claude 渠道自己短路,force 也不打服务端)
+- 设置是**每次刷新时读**的,改完立即生效,不用重登(前提是新代码已经加载过)
+
 ## 依赖的环境变量
 
 扩展只认 `~/.config/quota-glance/env`(优先级最高)与 `/etc/environment`、`~/.config/environment.d/*.conf`、会话环境:

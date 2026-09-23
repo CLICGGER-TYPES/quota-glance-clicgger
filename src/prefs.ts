@@ -1,5 +1,6 @@
 import Adw from 'gi://Adw';
 import Gio from 'gi://Gio';
+import GLib from 'gi://GLib';
 import Gtk from 'gi://Gtk';
 
 import {
@@ -11,6 +12,12 @@ import {
   SETTINGS_PROXY_NO_PROXY,
   SETTINGS_PROXY_URL,
 } from './runtime/proxy-settings.js';
+import {
+  effectiveIntervalMinutes,
+  normalizeIntervals,
+  SETTINGS_PROVIDER_INTERVAL,
+  withProviderInterval,
+} from './runtime/provider-intervals.js';
 import {
   createTranslator,
   type Translator,
@@ -276,7 +283,67 @@ export default class QuotaGlancePreferences extends ExtensionPreferences {
       syncing = false;
     });
     group.add(row);
+    for (const provider of PROVIDER_CATALOG)
+      group.add(this.#createProviderIntervalRow(settings, translator, provider));
     return group;
+  }
+
+  /** Per-provider throttle: the Claude usage endpoint, for instance, answers
+   *  429 when it is polled too often. 0 means "follow the global interval". */
+  #createProviderIntervalRow(
+    settings: Gio.Settings,
+    translator: Translator,
+    provider: {id: string; name: string},
+  ): Adw.SpinRow {
+    const read = () => normalizeIntervals(
+      settings.get_value(SETTINGS_PROVIDER_INTERVAL).deepUnpack(),
+    );
+    const row = new Adw.SpinRow({
+      title: translator.t('prefs.refresh.provider.title', {
+        name: provider.name,
+      }),
+      subtitle: translator.t('prefs.refresh.provider.subtitle'),
+      adjustment: new Gtk.Adjustment({
+        lower: 0,
+        upper: 240,
+        stepIncrement: 5,
+        pageIncrement: 30,
+        value: effectiveIntervalMinutes(
+          read(),
+          provider.id,
+          settings.get_int(SETTINGS_REFRESH_INTERVAL),
+        ),
+      }),
+      digits: 0,
+      numeric: true,
+      snapToTicks: true,
+    });
+    let syncing = false;
+
+    row.connect('notify::value', () => {
+      if (syncing)
+        return;
+
+      const next = withProviderInterval(
+        read(),
+        provider.id,
+        Math.round(row.value),
+      );
+      settings.set_value(
+        SETTINGS_PROVIDER_INTERVAL,
+        new GLib.Variant('a{si}', next),
+      );
+    });
+    settings.connect(`changed::${SETTINGS_PROVIDER_INTERVAL}`, () => {
+      syncing = true;
+      row.value = effectiveIntervalMinutes(
+        read(),
+        provider.id,
+        settings.get_int(SETTINGS_REFRESH_INTERVAL),
+      );
+      syncing = false;
+    });
+    return row;
   }
 }
 

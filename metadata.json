@@ -4,7 +4,7 @@
   "uuid": "quota-glance-clicgger@clicgger.github.io",
   "url": "https://github.com/CLICGGER-TYPES/quota-glance-clicgger",
   "settings-schema": "org.gnome.shell.extensions.quota-glance-clicgger",
-  "version-name": "1.0.2+clicgger.2",
+  "version-name": "1.0.2+clicgger.3",
   "shell-version": [
     "50"
   ]

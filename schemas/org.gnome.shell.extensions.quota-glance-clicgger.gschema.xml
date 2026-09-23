@@ -9,6 +9,11 @@
       <summary>Refresh interval in minutes</summary>
       <description>How often enabled providers should be refreshed.</description>
     </key>
+    <key name="provider-interval-minutes" type="a{si}">
+      <default>{'claude': 30}</default>
+      <summary>Minimum request interval per provider</summary>
+      <description>Minutes a provider waits between two requests. A missing entry or 0 follows the global refresh interval.</description>
+    </key>
     <key name="enabled-providers" type="as">
       <default>['codex', 'copilot']</default>
       <summary>Enabled providers</summary>

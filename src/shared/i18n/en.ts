@@ -35,6 +35,9 @@ export const englishMessages = {
   'prefs.refresh.title': 'Refresh',
   'prefs.refresh.interval.title': 'Automatic refresh interval',
   'prefs.refresh.interval.subtitle': 'Minutes between quota updates',
+  'prefs.refresh.provider.title': '{name} minimum interval',
+  'prefs.refresh.provider.subtitle':
+    'Minutes between requests for this provider; 0 follows the global interval',
 
   'provider.claude.description':
     'Claude Code plan usage (session and weekly limits)',
